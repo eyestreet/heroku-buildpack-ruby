@@ -5,7 +5,7 @@ module LanguagePack
   class Fetcher
     include ShellHelpers
 
-    def initialize(host_url)
+    def initialize(host_url, cdn = true)
       @config   = load_config
       @host_url = fetch_cdn(host_url)
     end
@@ -25,7 +25,11 @@ module LanguagePack
 
     def fetch_cdn(url)
       cdn = @config[url]
-      cdn.nil? ? url : cdn
+      if cdn
+        cdn.nil? ? url : cdn
+      else
+        url
+      end
     end
   end
 end

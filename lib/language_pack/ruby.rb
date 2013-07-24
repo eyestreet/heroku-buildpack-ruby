@@ -20,6 +20,9 @@ class LanguagePack::Ruby < LanguagePack::Base
   JVM_BASE_URL         = "http://heroku-jdk.s3.amazonaws.com"
   JVM_VERSION          = "openjdk7-latest"
   DEFAULT_RUBY_VERSION = "ruby-2.0.0"
+  ESR_BASE_URL = "https://s3.amazonaws.com/eyestreet-heroku-buildpack-ruby"
+  ESR_EXIFTOOL_VERSION = '8.97'
+  ESR_EXIFTOOL_BINARY_PATH = "exiftool-#{ESR_EXIFTOOL_VERSION}"
 
   # detects if this is a valid Ruby app
   # @return [Boolean] true if it's a Ruby app
@@ -40,6 +43,7 @@ class LanguagePack::Ruby < LanguagePack::Base
   def initialize(build_path, cache_path=nil)
     super(build_path, cache_path)
     @fetchers[:jvm] = LanguagePack::Fetcher.new(JVM_BASE_URL)
+    @fetchers[:exiftool] = LanguagePack::Fetcher.new(ESR_BASE_URL, false)
   end
 
   def name
@@ -396,9 +400,18 @@ WARNING
 
   # vendors binaries into the slug
   def install_binaries
+    install_exiftool_binary
     instrument 'ruby.install_binaries' do
       binaries.each {|binary| install_binary(binary) }
       Dir["bin/*"].each {|path| run("chmod +x #{path}") }
+    end
+  end
+
+  def install_exiftool_binary
+    bin_dir = "bin"
+    FileUtils.mkdir_p bin_dir
+    Dir.chdir(bin_dir) do |dir|
+      @fetchers[:exiftool].fetch_untar("#{ESR_EXIFTOOL_BINARY_PATH}.tgz")
     end
   end
 
